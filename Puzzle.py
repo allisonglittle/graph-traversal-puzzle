@@ -15,14 +15,20 @@ import heapq
 # Function returns minimum path from source to destination in puzzle board.
 # ---------------------------------------------------------------------------------
 def solve_puzzle(board, source, destination):
+    if not check_valid_node(board, source) or not check_valid_node(board, destination):
+        return None
+
     MST = graph_traversal(board, source, destination)
+    if destination not in MST:
+        return None
+
     path = [destination]
     while destination != source:
         destination, distance = MST[destination]
         path.append(destination)
     path.reverse()
-
-    return path
+    directions = directions_as_string(path)
+    return path, directions
 
 
 # ---------------------------------------------------------------------------------
@@ -30,7 +36,6 @@ def solve_puzzle(board, source, destination):
 #   the shortest path from the source to the destination.
 # ---------------------------------------------------------------------------------
 def graph_traversal(board, source, destination):
-    visited = []
     distances = initialize_distances(board)
     MST = {}
 
@@ -38,13 +43,13 @@ def graph_traversal(board, source, destination):
     distances[source] = 0
     priority_queue = [(0, source, source)]
 
-    while destination not in visited:
+    while len(priority_queue) > 0:
         node_distance, node, previous_node = heapq.heappop(priority_queue)
         if node_distance > distances[node]:
             continue
-        visited.append(node)
-        if node != previous_node:
-            MST[node] = (previous_node, node_distance)
+        MST[node] = (previous_node, node_distance)
+        if node == destination:
+            break
         neighbors = node_neighbors(board, node)
         for neighbor in neighbors:
             if node_distance + 1 < distances[neighbor]:
@@ -104,11 +109,23 @@ def open_path(board, node):
     return True
 
 
-# Puzzle = [
-#  ['-', '-', '-', '-', '-'],
-#  ['-', '-', '#', '-', '-'],
-#  ['-', '-', '-', '-', '-'],
-#  ['#', '-', '#', '#', '-'],
-#  ['-', '#', '-', '-', '-']
-# ]
-# print(solve_puzzle(Puzzle, (0, 2), (2, 2)))
+# ---------------------------------------------------------------------------------
+# Function moves through node path and returns a string of letter directions
+#   where L = left, R = right, D = down, U = up.
+# ---------------------------------------------------------------------------------
+def directions_as_string(path):
+    directions = ''
+    source = path[0]
+    for node in path[1:]:
+        if node[0] != source[0]:
+            if node[0] > source[0]:
+                directions += 'D'
+            else:
+                directions += 'U'
+        elif node[1] > source[1]:
+            directions += 'R'
+        else:
+            directions += 'L'
+        source = node
+
+    return directions
